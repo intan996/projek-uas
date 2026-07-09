@@ -82,6 +82,12 @@ st.markdown("""
             font-size: 16px;
             margin-left: 8px;
         }
+
+        /* Ngunci tinggi iframe peta Folium agar tidak melar setelah load */
+        iframe {
+            height: 300px !important;
+            max-height: 300px !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
