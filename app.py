@@ -259,7 +259,7 @@ with col_map:
             icon=folium.Icon(color='green', icon='leaf')
         ).add_to(m)
     
-    st_folium(m, height=380, width="100%", key="map_bali")
+    st_folium(m, height=300, use_container_width=True, key="map_bali")
 
 with col_pie:
     st.markdown('<div class="custom-subheader"><span class="custom-subheader-text">📊 Distribusi Wilayah Kabupaten</span></div>', unsafe_allow_html=True)
