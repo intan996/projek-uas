@@ -1,6 +1,29 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import re
+
+def parse_koordinat(s):
+    if not isinstance(s, str):
+        return None, None
+    dec = re.findall(r'(\d+\.?\d*)[°\s]*([NS])[,\s]+(\d+\.?\d*)[°\s]*([EW])', s)
+    if dec:
+        lat = float(dec[0][0]) * (-1 if dec[0][1] == 'S' else 1)
+        lon = float(dec[0][2]) * (-1 if dec[0][3] == 'W' else 1)
+        return lat, lon
+    dms = re.findall(r'(\d+)[^\d]+(\d+)[^\d]+(\d+\.?\d*)[^\d]*([NS])[,\s]+(\d+)[^\d]+(\d+)[^\d]+(\d+\.?\d*)[^\d]*([EW])', s)
+    if dms:
+        d = dms[0]
+        lat = (float(d[0]) + float(d[1])/60 + float(d[2])/3600) * (-1 if d[3]=='S' else 1)
+        lon = (float(d[4]) + float(d[5])/60 + float(d[6])/3600) * (-1 if d[7]=='W' else 1)
+        return lat, lon
+    dms2 = re.findall(r'(\d+)[^\d]+(\d+)[^\d]*([NS])[,\s]+(\d+)[^\d]+(\d+)[^\d]*([EW])', s)
+    if dms2:
+        d = dms2[0]
+        lat = (float(d[0]) + float(d[1])/60) * (-1 if d[2]=='S' else 1)
+        lon = (float(d[3]) + float(d[4])/60) * (-1 if d[5]=='W' else 1)
+        return lat, lon
+    return None, None
 
 st.set_page_config(page_title="Dashboard Wisata Bali", layout="wide")
 
@@ -8,6 +31,7 @@ st.title("🌴 Dashboard Tempat Wisata Bali")
 
 # LOAD DATA
 df = pd.read_excel("data_bersih_bali.xlsx")
+df[['lat', 'lon']] = df['Kordinat'].apply(lambda x: pd.Series(parse_koordinat(x)))
 
 # SIDEBAR FILTER
 st.sidebar.header("Filter Data")
@@ -96,6 +120,24 @@ fig4 = px.bar(
 )
 fig4.update_layout(xaxis_tickangle=-30)
 st.plotly_chart(fig4, use_container_width=True)
+
+# PETA
+st.subheader("🗺️ Peta Lokasi Wisata Bali")
+df_map = df_filtered.dropna(subset=["lat", "lon"])
+fig_map = px.scatter_mapbox(
+    df_map,
+    lat="lat",
+    lon="lon",
+    hover_name="Tempat wisata",
+    hover_data={"Penilaian Google Maps": True, "Harga Tiket Masuk ": True, "lat": False, "lon": False},
+    color="Penilaian Google Maps",
+    size="Jumlah Ulasan Google",
+    color_continuous_scale="Viridis",
+    zoom=9,
+    height=500
+)
+fig_map.update_layout(mapbox_style="open-street-map")
+st.plotly_chart(fig_map, use_container_width=True)
 
 # TABLE
 st.subheader("📄 Data Lengkap")
